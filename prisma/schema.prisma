@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(DEVELOPER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model ApiMetric {
+  id           String   @id @default(uuid())
+  endpoint     String
+  method       String
+  statusCode   Int
+  responseTime Float
+  timestamp    DateTime @default(now())
+  service      String?
+  userId       String?
+
+  @@map("api_metrics")
+}
+
+model Incident {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  severity    Severity       @default(LOW)
+  status      IncidentStatus @default(OPEN)
+  service     String
+  createdAt   DateTime       @default(now())
+  resolvedAt  DateTime?
+
+  @@map("incidents")
+}
+
+enum Role {
+  ADMIN
+  DEVELOPER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+}
