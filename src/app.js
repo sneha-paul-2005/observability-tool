@@ -2,23 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const healthRoutes = require('./routes/health.routes');
 
 const app = express();
 
 // Middleware
-app.use(helmet());         // security headers
-app.use(cors());           // allow cross-origin requests
-app.use(morgan('dev'));    // log every request to console
-app.use(express.json());   // parse JSON request bodies
+app.use(helmet());
+app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
 
-// Health check route
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Observability Tool API is running',
-    version: '1.0.0'
-  });
-});
+// Routes
+app.use('/health', healthRoutes);
 
 // 404 handler
 app.use((req, res) => {
