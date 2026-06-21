@@ -25,6 +25,7 @@
     "morgan": "^1.11.0",
     "pg": "^8.21.0",
     "prisma": "^6.19.3",
+    "swagger-jsdoc": "^6.3.0",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
