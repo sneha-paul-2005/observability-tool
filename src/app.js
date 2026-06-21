@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
 const logRoutes = require('./routes/log.routes');
+const metricsRoutes = require('./routes/metrics.routes');
+const monitorRoutes = require('./routes/monitor.routes');
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(express.json());
 app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/logs', logRoutes);
+app.use('/api/metrics', metricsRoutes);
+app.use('/api/monitor', monitorRoutes);
 
 // 404 handler
 app.use((req, res) => {
