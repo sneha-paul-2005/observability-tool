@@ -1,21 +1,30 @@
 const Log = require('../models/log.model');
+const { parseLog, processBulkLogs } = require('../services/logProcessor.service');
+const { indexLog, bulkIndexLogs } = require('../services/elasticsearch.service');
 
 // Ingest a single log
 const createLog = async (req, res) => {
   try {
-    const { level, message, service, endpoint, method, statusCode, responseTime, userId, metadata } = req.body;
+    const processedLog = parseLog(req.body);
 
+    // Save to MongoDB
     const log = await Log.create({
-      level,
-      message,
-      service,
-      endpoint,
-      method,
-      statusCode,
-      responseTime,
-      userId,
-      metadata
+      level:        processedLog.level,
+      message:      processedLog.message,
+      service:      processedLog.service,
+      endpoint:     processedLog.endpoint,
+      method:       processedLog.method,
+      statusCode:   processedLog.statusCode,
+      responseTime: processedLog.responseTime,
+      metadata:     processedLog.metadata,
     });
+
+    // Index to Elasticsearch (don't fail the request if ES is down)
+    try {
+      await indexLog(processedLog);
+    } catch (esError) {
+      console.warn('⚠️  Elasticsearch indexing failed:', esError.message);
+    }
 
     res.status(201).json({ message: 'Log created successfully', log });
   } catch (error) {
@@ -31,8 +40,24 @@ const createBulkLogs = async (req, res) => {
       return res.status(400).json({ error: 'logs must be an array' });
     }
 
-    const createdLogs = await Log.insertMany(logs);
-    res.status(201).json({ message: `${createdLogs.length} logs created`, count: createdLogs.length });
+    const { processed, failed, total } = processBulkLogs(logs);
+
+    // Save to MongoDB
+    const createdLogs = await Log.insertMany(processed);
+
+    // Index to Elasticsearch
+    try {
+      await bulkIndexLogs(processed);
+    } catch (esError) {
+      console.warn('⚠️  Elasticsearch bulk indexing failed:', esError.message);
+    }
+
+    res.status(201).json({
+      message: `${createdLogs.length} logs created`,
+      count:   createdLogs.length,
+      failed:  failed.length,
+      total,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -64,7 +89,7 @@ const getLogs = async (req, res) => {
       logs,
       pagination: {
         total,
-        page: parseInt(page),
+        page:  parseInt(page),
         limit: parseInt(limit),
         pages: Math.ceil(total / limit)
       }
@@ -101,7 +126,7 @@ const getLogStats = async (req, res) => {
       { $match: filter },
       {
         $group: {
-          _id: '$level',
+          _id:   '$level',
           count: { $sum: 1 }
         }
       }

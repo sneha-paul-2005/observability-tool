@@ -10,6 +10,7 @@ const logRoutes = require('./routes/log.routes');
 const metricsRoutes = require('./routes/metrics.routes');
 const monitorRoutes = require('./routes/monitor.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/logs', logRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/monitor', monitorRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/search', searchRoutes);
 
 // 404 handler
 app.use((req, res) => {

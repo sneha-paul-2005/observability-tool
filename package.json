@@ -13,6 +13,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@elastic/elasticsearch": "^8.19.1",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
     "axios": "^1.18.0",
     "bcryptjs": "^3.0.3",
