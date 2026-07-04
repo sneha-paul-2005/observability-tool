@@ -17,7 +17,7 @@ function getClient() {
 async function generate(prompt, options = {}) {
   const client = getClient();
   const model  = client.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-2.5-flash',
     generationConfig: {
       temperature:     options.temperature     ?? 0.3,
       maxOutputTokens: options.maxOutputTokens ?? 1024,
