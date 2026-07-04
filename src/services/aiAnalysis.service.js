@@ -1,17 +1,22 @@
 const { generate } = require('./gemini.service');
 
 function parseAIResponse(text) {
-  const cleaned = text
+  // Strip markdown fences
+  let cleaned = text
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
 
-  // Find the first { and last } to extract just the JSON
+  // Extract just the JSON object
   const start = cleaned.indexOf('{');
   const end   = cleaned.lastIndexOf('}');
   if (start === -1 || end === -1) throw new Error('No JSON found');
+  cleaned = cleaned.slice(start, end + 1);
 
-  return JSON.parse(cleaned.slice(start, end + 1));
+  // Fix escaped quotes inside values
+  cleaned = cleaned.replace(/\\"/g, '"');
+
+  return JSON.parse(cleaned);
 }
 
 async function analyzeLogs(logs, context = {}) {
