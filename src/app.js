@@ -11,6 +11,8 @@ const metricsRoutes = require('./routes/metrics.routes');
 const monitorRoutes = require('./routes/monitor.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const searchRoutes = require('./routes/search.routes');
+const aiRoutes = require('./routes/ai.routes');
+const incidentRoutes = require('./routes/incident.routes');
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/monitor', monitorRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/incidents', incidentRoutes);
 
 // 404 handler
 app.use((req, res) => {

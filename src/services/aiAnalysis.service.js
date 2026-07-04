@@ -5,7 +5,13 @@ function parseAIResponse(text) {
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
-  return JSON.parse(cleaned);
+
+  // Find the first { and last } to extract just the JSON
+  const start = cleaned.indexOf('{');
+  const end   = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('No JSON found');
+
+  return JSON.parse(cleaned.slice(start, end + 1));
 }
 
 async function analyzeLogs(logs, context = {}) {
@@ -25,7 +31,7 @@ TOTAL LOGS: ${logs.length}
 LOGS:
 ${logSample}
 
-Respond ONLY with valid JSON in this format:
+You MUST respond with ONLY a valid JSON object. No markdown, no code fences, no explanation. Start your response with { and end with }. Use this exact format:
 {
   "summary": "2-3 sentence plain-English summary",
   "severity": "low | medium | high | critical",
@@ -58,7 +64,7 @@ Description: ${incident.description}
 
 ${relatedLogs.length ? `RELATED LOGS:\n${logLines}` : ''}
 
-Respond ONLY with valid JSON:
+You MUST respond with ONLY a valid JSON object. No markdown, no code fences, no explanation. Start your response with { and end with }.
 {
   "headline": "one sentence executive summary",
   "impact": "who/what was affected",
@@ -81,7 +87,8 @@ async function generateRecommendations(stats) {
 STATS (last 24 hours):
 ${JSON.stringify(stats, null, 2)}
 
-Respond ONLY with valid JSON:
+You MUST respond with ONLY a valid JSON object. No markdown, no code fences, no explanation. Start your response with { and end with }.
+
 {
   "performance": [
     { "priority": "high|medium|low", "issue": "...", "recommendation": "..." }
@@ -110,7 +117,7 @@ ${error.stack  ? `STACK: ${error.stack.split('\n').slice(0, 5).join('\n')}` : ''
 ${context.service  ? `SERVICE: ${context.service}` : ''}
 ${context.statusCode ? `STATUS: ${context.statusCode}` : ''}
 
-Respond ONLY with valid JSON:
+You MUST respond with ONLY a valid JSON object. No markdown, no code fences, no explanation. Start your response with { and end with }.
 {
   "plainEnglish": "what happened in simple terms",
   "likelyCauses": ["cause1", "cause2"],
