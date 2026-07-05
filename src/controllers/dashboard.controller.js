@@ -55,4 +55,62 @@ const getDashboardOverview = async (req, res) => {
   }
 };
 
-module.exports = { getDashboardOverview };
+const getRangeStartDate = (range) => {
+  const now = new Date();
+  switch (range) {
+    case '7d':
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case '30d':
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case '24h':
+    default:
+      return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+};
+
+const getDashboardHealth = async (req, res) => {
+  try {
+    const range = req.query.range || '24h';
+    const since = getRangeStartDate(range);
+
+    const services = await Service.find();
+
+    const healthData = await Promise.all(services.map(async (svc) => {
+      const totalRequests = await prisma.apiMetric.count({
+        where: { service: svc.name, timestamp: { gte: since } }
+      });
+      const errorRequests = await prisma.apiMetric.count({
+        where: { service: svc.name, timestamp: { gte: since }, statusCode: { gte: 400 } }
+      });
+      const uptime = totalRequests > 0
+        ? (((totalRequests - errorRequests) / totalRequests) * 100).toFixed(2)
+        : null;
+
+      return {
+        name: svc.name,
+        currentStatus: svc.status,
+        lastChecked: svc.lastChecked,
+        lastResponseTime: svc.lastResponseTime,
+        lastStatusCode: svc.lastStatusCode,
+        uptime: uptime !== null ? `${uptime}%` : 'N/A (no requests in range)',
+        totalRequests,
+        errorRequests
+      };
+    }));
+
+    res.json({
+      range,
+      summary: {
+        totalServices: services.length,
+        up: services.filter(s => s.status === 'up').length,
+        down: services.filter(s => s.status === 'down').length
+      },
+      services: healthData,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getDashboardOverview, getDashboardHealth };

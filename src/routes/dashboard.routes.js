@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboardOverview } = require('../controllers/dashboard.controller');
+const { getDashboardOverview, getDashboardHealth } = require('../controllers/dashboard.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
 /**
@@ -16,5 +16,27 @@ const { authenticate } = require('../middleware/auth.middleware');
  *         description: Dashboard summary data
  */
 router.get('/overview', authenticate, getDashboardOverview);
+
+/**
+ * @swagger
+ * /api/dashboard/health:
+ *   get:
+ *     summary: Get service health and uptime data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d]
+ *           default: 24h
+ *         description: Time range for uptime calculation
+ *     responses:
+ *       200:
+ *         description: Service health data with uptime percentages
+ */
+router.get('/health', authenticate, getDashboardHealth);
 
 module.exports = router;
