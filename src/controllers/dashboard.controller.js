@@ -163,5 +163,57 @@ const getDashboardErrorTrends = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getDashboardPerformance = async (req, res) => {
+  try {
+    const range = req.query.range || '24h';
+    const since = getRangeStartDate(range);
 
-module.exports = { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends };
+    // Overall response time stats (avg, p95, p99) via raw SQL — Prisma ORM can't do percentiles directly
+    const statsResult = await prisma.$queryRaw`
+      SELECT
+        AVG("responseTime") as avg,
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "responseTime") as p95,
+        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY "responseTime") as p99,
+        COUNT(*) as total
+      FROM api_metrics
+      WHERE timestamp >= ${since}
+    `;
+    const stats = statsResult[0];
+
+    const totalRequests = Number(stats.total);
+    const rangeMinutes = (Date.now() - since.getTime()) / (1000 * 60);
+    const throughput = rangeMinutes > 0
+      ? (totalRequests / rangeMinutes).toFixed(2)
+      : 0;
+
+    // Per-endpoint breakdown
+    const byEndpointRaw = await prisma.apiMetric.groupBy({
+      by: ['endpoint', 'method'],
+      where: { timestamp: { gte: since } },
+      _count: { _all: true },
+      _avg: { responseTime: true },
+      orderBy: { _count: { endpoint: 'desc' } }
+    });
+
+    const byEndpoint = byEndpointRaw.map(e => ({
+      endpoint: e.endpoint,
+      method: e.method,
+      requests: e._count._all,
+      avgResponseTime: e._avg.responseTime ? Math.round(e._avg.responseTime) : 0
+    }));
+
+    res.json({
+      range,
+      totalRequests,
+      avgResponseTime: stats.avg ? Math.round(Number(stats.avg)) : 0,
+      p95ResponseTime: stats.p95 ? Math.round(Number(stats.p95)) : 0,
+      p99ResponseTime: stats.p99 ? Math.round(Number(stats.p99)) : 0,
+      throughput: `${throughput} req/min`,
+      byEndpoint,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+module.exports = { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends, getDashboardPerformance };
