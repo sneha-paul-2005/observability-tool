@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends, getDashboardPerformance } = require('../controllers/dashboard.controller');
+const { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends, getDashboardPerformance, getDashboardIncidentStats } = require('../controllers/dashboard.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
 /**
@@ -81,4 +81,25 @@ router.get('/errors/trends', authenticate, getDashboardErrorTrends);
  *         description: Performance metrics and per-endpoint breakdown
  */
 router.get('/performance', authenticate, getDashboardPerformance);
+/**
+ * @swagger
+ * /api/dashboard/incidents/stats:
+ *   get:
+ *     summary: Get incident statistics (by status, severity, and resolution time trends)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d]
+ *           default: 24h
+ *         description: Time range for incident analysis
+ *     responses:
+ *       200:
+ *         description: Incident counts and resolution time statistics
+ */
+router.get('/incidents/stats', authenticate, getDashboardIncidentStats);
 module.exports = router;

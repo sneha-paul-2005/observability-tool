@@ -216,4 +216,58 @@ const getDashboardPerformance = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-module.exports = { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends, getDashboardPerformance };
+const getDashboardIncidentStats = async (req, res) => {
+  try {
+    const range = req.query.range || '24h';
+    const since = getRangeStartDate(range);
+
+    const incidents = await prisma.incident.findMany({
+      where: { createdAt: { gte: since } }
+    });
+
+    // Counts by status
+    const byStatus = { OPEN: 0, INVESTIGATING: 0, RESOLVED: 0 };
+    incidents.forEach(i => { byStatus[i.status] = (byStatus[i.status] || 0) + 1; });
+
+    // Counts by severity
+    const bySeverity = { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
+    incidents.forEach(i => { bySeverity[i.severity] = (bySeverity[i.severity] || 0) + 1; });
+
+    // Resolution time (only for resolved incidents)
+    const resolved = incidents.filter(i => i.resolvedAt);
+    const resolutionTimesMs = resolved.map(i => new Date(i.resolvedAt) - new Date(i.createdAt));
+    const avgResolutionMs = resolutionTimesMs.length > 0
+      ? resolutionTimesMs.reduce((a, b) => a + b, 0) / resolutionTimesMs.length
+      : null;
+    const avgResolutionHours = avgResolutionMs !== null
+      ? (avgResolutionMs / (1000 * 60 * 60)).toFixed(2)
+      : null;
+
+    // Daily resolution trend (avg hours to resolve, bucketed by resolution date)
+    const trendMap = {};
+    resolved.forEach(i => {
+      const day = new Date(i.resolvedAt).toISOString().split('T')[0];
+      const hours = (new Date(i.resolvedAt) - new Date(i.createdAt)) / (1000 * 60 * 60);
+      if (!trendMap[day]) trendMap[day] = [];
+      trendMap[day].push(hours);
+    });
+    const resolutionTrend = Object.keys(trendMap).sort().map(day => ({
+      date: day,
+      avgResolutionHours: (trendMap[day].reduce((a, b) => a + b, 0) / trendMap[day].length).toFixed(2),
+      count: trendMap[day].length
+    }));
+
+    res.json({
+      range,
+      totalIncidents: incidents.length,
+      byStatus,
+      bySeverity,
+      avgResolutionTime: avgResolutionHours !== null ? `${avgResolutionHours}h` : 'N/A (no resolved incidents)',
+      resolutionTrend,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+module.exports = { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends, getDashboardPerformance, getDashboardIncidentStats };
