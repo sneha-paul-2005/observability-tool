@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboardOverview, getDashboardHealth } = require('../controllers/dashboard.controller');
+const { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends } = require('../controllers/dashboard.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
 /**
@@ -38,5 +38,27 @@ router.get('/overview', authenticate, getDashboardOverview);
  *         description: Service health data with uptime percentages
  */
 router.get('/health', authenticate, getDashboardHealth);
+
+/**
+ * @swagger
+ * /api/dashboard/errors/trends:
+ *   get:
+ *     summary: Get error trends over time, bucketed and broken down by service
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d]
+ *           default: 24h
+ *         description: Time range for error trend analysis
+ *     responses:
+ *       200:
+ *         description: Bucketed error timeline and per-service breakdown
+ */
+router.get('/errors/trends', authenticate, getDashboardErrorTrends);
 
 module.exports = router;

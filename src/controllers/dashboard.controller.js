@@ -113,4 +113,55 @@ const getDashboardHealth = async (req, res) => {
   }
 };
 
-module.exports = { getDashboardOverview, getDashboardHealth };
+const getBucketFormat = (range) => {
+  // Hourly buckets for 24h, daily buckets for longer ranges
+  return range === '24h' ? '%Y-%m-%dT%H:00:00' : '%Y-%m-%d';
+};
+
+const getDashboardErrorTrends = async (req, res) => {
+  try {
+    const range = req.query.range || '24h';
+    const since = getRangeStartDate(range);
+    const bucketFormat = getBucketFormat(range);
+
+    // Time-bucketed error counts (chart-ready timeline)
+    const timeline = await Log.aggregate([
+      { $match: { level: 'error', timestamp: { $gte: since } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: bucketFormat, date: '$timestamp' } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, timestamp: '$_id', count: 1 } }
+    ]);
+
+    // Error counts broken down by service
+    const byService = await Log.aggregate([
+      { $match: { level: 'error', timestamp: { $gte: since } } },
+      {
+        $group: {
+          _id: '$service',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $project: { _id: 0, service: '$_id', count: 1 } }
+    ]);
+
+    const totalErrors = byService.reduce((sum, s) => sum + s.count, 0);
+
+    res.json({
+      range,
+      totalErrors,
+      timeline,
+      byService,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getDashboardOverview, getDashboardHealth, getDashboardErrorTrends };
