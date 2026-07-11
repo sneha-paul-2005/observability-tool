@@ -33,7 +33,19 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: observability_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   postgres_data:
   mongo_data:
   esdata:
+  prometheus_data:

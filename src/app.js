@@ -13,6 +13,8 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const searchRoutes = require('./routes/search.routes');
 const aiRoutes = require('./routes/ai.routes');
 const incidentRoutes = require('./routes/incident.routes');
+const metricsMiddleware = require('./middleware/metrics.middleware');
+const { register } = require('./services/prometheus.service');
 
 const app = express();
 
@@ -21,9 +23,16 @@ app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(metricsMiddleware);
 
 // Swagger Docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Prometheus metrics endpoint (scraped by Prometheus, not JSON)
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 // Routes
 app.use('/health', healthRoutes);
