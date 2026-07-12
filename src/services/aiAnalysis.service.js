@@ -137,9 +137,39 @@ You MUST respond with ONLY a valid JSON object. No markdown, no code fences, no 
   }
 }
 
+async function answerAssistantQuery(question, context = {}) {
+  const { errorLogs = [], incidents = [], performanceSummary = {} } = context;
+
+  const errorLogLines = errorLogs.slice(0, 20).map(l =>
+    `- [${l.timestamp}] [${l.service}] ${l.message}`
+  ).join('\n') || 'No recent error logs.';
+
+  const incidentLines = incidents.slice(0, 10).map(i =>
+    `- [${i.severity}] [${i.status}] ${i.title} (service: ${i.service}, created: ${i.createdAt})`
+  ).join('\n') || 'No recent incidents.';
+
+  const prompt = `You are an AI assistant embedded in a developer observability platform. A developer is asking you a natural language question about their system. Answer using ONLY the real data provided below — do not invent specifics that aren't present. If the data doesn't contain enough information to fully answer, say so honestly and suggest what to check next.
+
+QUESTION: "${question}"
+
+RECENT ERROR LOGS (last 24h, up to 20):
+${errorLogLines}
+
+RECENT INCIDENTS (up to 10):
+${incidentLines}
+
+PERFORMANCE SUMMARY (last 24h):
+${JSON.stringify(performanceSummary, null, 2)}
+
+Respond in plain, conversational English — like a helpful engineer explaining this to a colleague. Do not use JSON or markdown formatting. Keep it concise (3-6 sentences unless the question needs more detail).`;
+
+  const answer = await generate(prompt, { temperature: 0.3, maxOutputTokens: 800 });
+  return answer.trim();
+}
 module.exports = {
   analyzeLogs,
   generateIncidentSummary,
   generateRecommendations,
   explainError,
+  answerAssistantQuery,
 };

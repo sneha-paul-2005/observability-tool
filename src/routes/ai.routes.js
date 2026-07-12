@@ -7,6 +7,7 @@ const {
   recommendationsHandler,
   detectAnomaliesHandler,
   getAnomaliesHandler,
+  assistantQueryHandler,
 } = require('../controllers/ai.controller');
 
 /**
@@ -130,5 +131,32 @@ router.post('/anomalies/detect', authenticate, detectAnomaliesHandler);
  *         description: List of anomalies
  */
 router.get('/anomalies', authenticate, getAnomaliesHandler);
+
+/**
+ * @swagger
+ * /api/ai/assistant/query:
+ *   post:
+ *     summary: Ask the AI assistant a natural language question about your system (logs, incidents, performance)
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [question]
+ *             properties:
+ *               question:
+ *                 type: string
+ *                 example: Why did API response times increase yesterday?
+ *     responses:
+ *       200:
+ *         description: Plain-English answer grounded in recent logs, incidents, and performance data
+ *       400:
+ *         description: Missing question
+ */
+router.post('/assistant/query', authenticate, assistantQueryHandler);
 
 module.exports = router;

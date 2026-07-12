@@ -2,6 +2,8 @@ const { analyzeLogs, generateIncidentSummary, generateRecommendations, explainEr
 const { runAnomalyDetection } = require('../services/anomaly.service');
 const { getRecentLogsForService } = require('../services/elasticsearch.service');
 const prisma = require('../config/prisma');
+const { answerAssistantQuery } = require('../services/aiAnalysis.service');
+const Log = require('../models/log.model');
 
 // POST /api/ai/analyze
 async function analyzeLogsHandler(req, res) {
@@ -121,10 +123,57 @@ async function getAnomaliesHandler(req, res) {
   }
 }
 
+// POST /api/ai/assistant/query
+async function assistantQueryHandler(req, res) {
+  try {
+    const { question } = req.body;
+    if (!question) {
+      return res.status(400).json({ success: false, error: 'question is required' });
+    }
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [errorLogs, incidents, totalRequests, errorRequests, avgResponseTimeResult] = await Promise.all([
+      Log.find({ level: 'error', timestamp: { $gte: since } }).sort({ timestamp: -1 }).limit(20),
+      prisma.incident.findMany({ where: { createdAt: { gte: since } }, orderBy: { createdAt: 'desc' }, take: 10 }),
+      prisma.apiMetric.count({ where: { timestamp: { gte: since } } }),
+      prisma.apiMetric.count({ where: { timestamp: { gte: since }, statusCode: { gte: 400 } } }),
+      prisma.apiMetric.aggregate({ where: { timestamp: { gte: since } }, _avg: { responseTime: true } }),
+    ]);
+
+    const performanceSummary = {
+      totalRequests,
+      errorRequests,
+      errorRate: totalRequests > 0 ? ((errorRequests / totalRequests) * 100).toFixed(2) + '%' : '0%',
+      avgResponseTime: Math.round(avgResponseTimeResult._avg.responseTime || 0) + 'ms',
+    };
+
+    const answer = await answerAssistantQuery(question, {
+      errorLogs,
+      incidents,
+      performanceSummary,
+    });
+
+    res.json({
+      success: true,
+      question,
+      answer,
+      contextUsed: {
+        errorLogsCount: errorLogs.length,
+        incidentsCount: incidents.length,
+        performanceSummary,
+      },
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
 module.exports = {
   analyzeLogsHandler,
   explainErrorHandler,
   recommendationsHandler,
   detectAnomaliesHandler,
   getAnomaliesHandler,
+  assistantQueryHandler,
 };
