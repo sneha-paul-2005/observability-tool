@@ -45,6 +45,21 @@ model Incident {
   @@map("incidents")
 }
 
+model Alert {
+  id          String      @id @default(uuid())
+  type        AlertType
+  severity    Severity    @default(MEDIUM)
+  message     String
+  service     String?
+  metricValue Float?
+  threshold   Float?
+  status      AlertStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  resolvedAt  DateTime?
+
+  @@map("alerts")
+}
+
 enum Role {
   ADMIN
   DEVELOPER
@@ -60,5 +75,17 @@ enum Severity {
 enum IncidentStatus {
   OPEN
   INVESTIGATING
+  RESOLVED
+}
+
+enum AlertType {
+  HIGH_ERROR_RATE
+  SERVICE_DOWNTIME
+  SLOW_API
+  INFRASTRUCTURE_FAILURE
+}
+
+enum AlertStatus {
+  ACTIVE
   RESOLVED
 }

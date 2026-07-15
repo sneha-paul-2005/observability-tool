@@ -13,6 +13,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const searchRoutes = require('./routes/search.routes');
 const aiRoutes = require('./routes/ai.routes');
 const incidentRoutes = require('./routes/incident.routes');
+const alertRoutes = require('./routes/alert.routes');
 const metricsMiddleware = require('./middleware/metrics.middleware');
 const { register } = require('./services/prometheus.service');
 
@@ -44,6 +45,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // 404 handler
 app.use((req, res) => {

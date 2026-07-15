@@ -3,6 +3,7 @@ const app = require('./app');
 const { connectMongoDB, connectPostgres } = require('./config/database');
 const { checkConnection, initializeIndex } = require('./services/elasticsearch.service');
 const { runAnomalyDetection } = require('./services/anomaly.service');
+const { runAlertChecks } = require('./services/alerting.service');
 
 const PORT = process.env.PORT || 3000;
 
@@ -30,6 +31,18 @@ const startServer = async () => {
       console.error('Anomaly detection error:', err.message);
     }
   }, 5 * 60 * 1000);
+
+  // Alert checks — runs every 2 minutes
+  setInterval(async () => {
+    try {
+      const alerts = await runAlertChecks();
+      if (alerts.length > 0) {
+        console.log(`🔔 ${alerts.length} new alert(s) triggered`);
+      }
+    } catch (err) {
+      console.error('Alert check error:', err.message);
+    }
+  }, 2 * 60 * 1000);
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
