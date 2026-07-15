@@ -1,13 +1,13 @@
 const Log = require('../models/log.model');
 const { parseLog, processBulkLogs } = require('../services/logProcessor.service');
-const { indexLog, bulkIndexLogs } = require('../services/elasticsearch.service');
+const { publishLog } = require('../services/kafkaProducer.service');
 
 // Ingest a single log
 const createLog = async (req, res) => {
   try {
     const processedLog = parseLog(req.body);
 
-    // Save to MongoDB
+    // Save to MongoDB (synchronous — immediately queryable)
     const log = await Log.create({
       level:        processedLog.level,
       message:      processedLog.message,
@@ -19,11 +19,10 @@ const createLog = async (req, res) => {
       metadata:     processedLog.metadata,
     });
 
-    // Index to Elasticsearch (don't fail the request if ES is down)
-    try {
-      await indexLog(processedLog);
-    } catch (esError) {
-      console.warn('⚠️  Elasticsearch indexing failed:', esError.message);
+    // Publish to Kafka for async Elasticsearch indexing (decoupled from request/response)
+    const published = await publishLog({ ...processedLog, logId: log._id.toString() });
+    if (!published) {
+      console.warn('⚠️  Kafka publish failed — log saved to MongoDB but not queued for ES indexing');
     }
 
     res.status(201).json({ message: 'Log created successfully', log });
@@ -45,12 +44,12 @@ const createBulkLogs = async (req, res) => {
     // Save to MongoDB
     const createdLogs = await Log.insertMany(processed);
 
-    // Index to Elasticsearch
-    try {
-      await bulkIndexLogs(processed);
-    } catch (esError) {
-      console.warn('⚠️  Elasticsearch bulk indexing failed:', esError.message);
-    }
+    // Publish each log to Kafka for async ES indexing
+    await Promise.all(
+      createdLogs.map((log, i) =>
+        publishLog({ ...processed[i], logId: log._id.toString() })
+      )
+    );
 
     res.status(201).json({
       message: `${createdLogs.length} logs created`,

@@ -4,6 +4,7 @@ const { connectMongoDB, connectPostgres } = require('./config/database');
 const { checkConnection, initializeIndex } = require('./services/elasticsearch.service');
 const { runAnomalyDetection } = require('./services/anomaly.service');
 const { runAlertChecks } = require('./services/alerting.service');
+const { startLogConsumer } = require('./consumers/logConsumer');
 
 const PORT = process.env.PORT || 3000;
 
@@ -18,6 +19,13 @@ const startServer = async () => {
     console.log('✅ Elasticsearch connected');
   } else {
     console.warn('⚠️  Elasticsearch not available — search features disabled');
+  }
+
+  // Kafka consumer — async log processing/indexing
+  try {
+    await startLogConsumer();
+  } catch (err) {
+    console.error('❌ Kafka consumer failed to start:', err.message);
   }
 
   // Anomaly detection — runs every 5 minutes
