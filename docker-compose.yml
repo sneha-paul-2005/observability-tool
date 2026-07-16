@@ -1,4 +1,27 @@
 services:
+  app:
+    build: .
+    container_name: observability_app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/observability_db
+      - MONGODB_URI=mongodb://mongodb:27017/observability_logs
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - KAFKA_BROKER=kafka:29092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=3000
+      - NODE_ENV=production
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - mongodb
+      - elasticsearch
+      - kafka
+      - redis
+
   postgres:
     image: postgres:15
     container_name: observability_postgres
@@ -39,8 +62,6 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   grafana:
     image: grafana/grafana:latest
