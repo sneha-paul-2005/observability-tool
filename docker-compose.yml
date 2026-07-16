@@ -79,9 +79,18 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
+  redis:
+    image: redis:7-alpine
+    container_name: observability_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
   mongo_data:
   esdata:
   prometheus_data:
   grafana_data:
+  redis_data:
