@@ -1,212 +1,189 @@
-# AI-Powered Developer Observability Tool
+# Observability Tool — AI-Powered Backend Monitoring Platform
 
-An intelligent backend platform that helps developers monitor, analyze, and troubleshoot APIs and backend services using AI-powered diagnostics.
+![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-4169E1?logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)
+![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.13-005571?logo=elasticsearch&logoColor=white)
+![Kafka](https://img.shields.io/badge/Kafka-Streaming-231F20?logo=apachekafka&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800?logo=grafana&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-AI-8E75B2?logo=googlegemini&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployment-326CE5?logo=kubernetes&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+### Your AI-Powered Backend Observability Copilot
+
+A backend platform that watches your APIs and services, catches problems before you notice them, and explains what went wrong in plain English — powered by Gemini AI, backed by a full production-style monitoring stack.
+
+Instead of manually digging through logs to figure out why a service slowed down or started failing, this tool collects logs and metrics automatically, flags anomalies on its own, and uses an LLM to explain what's happening and how to fix it.
+
+---
 
 ## What it does
-- Collects logs, metrics, and traces from applications
-- Detects anomalies in API behavior automatically
-- Uses Gemini AI to generate human-readable explanations
-- Searches logs instantly using Elasticsearch
-- Generates AI-powered incident summaries and reports
-- Provides actionable performance and security recommendations
+
+- Collects logs, metrics, and traces from any application via a simple ingestion API
+- Detects anomalies automatically — traffic spikes, error rate increases, response time degradation
+- Explains issues in plain English using Gemini AI — root cause analysis, incident summaries, recommendations
+- Answers questions about your system in natural language — *"Why did response times increase yesterday?"*
+- Searches logs instantly with full-text search via Elasticsearch
+- Visualizes metrics live with Prometheus and Grafana dashboards
+- Alerts on high error rates, downtime, and slow APIs, with auto-resolution when conditions clear
+- Streams logs asynchronously through Kafka, decoupled from the request/response cycle
+- Caches expensive queries and AI responses with Redis
+- Deploys anywhere — Docker and Kubernetes manifests included
+
+---
+
+## How it fits together
+
+Applications send logs and metrics to the API. Logs save to MongoDB immediately, then publish to Kafka so a separate consumer indexes them into Elasticsearch without slowing down the request. Metrics, incidents, alerts, and users live in PostgreSQL via Prisma. Redis caches expensive dashboard and AI queries. Prometheus scrapes live metrics and Grafana visualizes them. Gemini AI analyzes logs, summarizes incidents, and answers natural-language questions, always grounded in real recent data rather than guessing.
+
+---
 
 ## Tech Stack
-- **Backend:** Node.js, Express.js
-- **Databases:** PostgreSQL (via Prisma ORM v6), MongoDB (via Mongoose)
-- **AI:** Gemini API (`gemini-2.5-flash`)
-- **Search:** Elasticsearch 8.13.0
-- **Queue:** Apache Kafka (Phase 3)
-- **Cache:** Redis (Phase 3)
-- **Monitoring:** Prometheus + Grafana (Phase 3)
-- **Deployment:** Docker + Kubernetes
-- **API Docs:** Swagger
-- **Testing:** Jest
-- **Containerization:** Docker Compose (local dev)
 
-## Project Phases
-- **Phase 1 (Month 1):** Observability Foundation & Monitoring Infrastructure — ✅ Complete
-- **Phase 2 (Month 2):** AI-Powered Analysis & Anomaly Detection Engine — ✅ Complete
-- **Phase 3 (Month 3):** Intelligent Observability Dashboard & Production Deployment — Upcoming
-
----
-
-## Phase 1 — Completed Deliverables ✅
-
-### Infrastructure
-- Express.js server with Helmet, CORS, and Morgan logging
-- PostgreSQL connected via Prisma ORM v6, running in Docker
-- MongoDB connected via Mongoose, running in Docker
-- Database schema covering Users, API Metrics, and Incidents
-- Health check endpoints for both databases
-
-### Authentication Module
-- User registration with bcrypt password hashing
-- JWT-based login system
-- Role-based access control (ADMIN / DEVELOPER)
-- Protected route middleware
-
-### Log Collection Service
-- Log ingestion API (single and bulk)
-- Log filtering by level, service, and date range
-- Error log isolation endpoint
-- Log statistics aggregation
-
-### Metrics Collection Module
-- API metric recording (response time, status codes)
-- Average response time per endpoint
-- Error rate calculation
-- Throughput tracking (requests per minute)
-
-### API Health Monitoring
-- Service registration for external endpoint monitoring
-- On-demand health checks (single and bulk)
-- Status, latency, and status code tracking per service
-
-### Dashboard Overview API
-- Single endpoint combining logs, metrics, and service health summaries
+| Layer | Technology |
+|---|---|
+| API | Node.js, Express.js |
+| Relational data | PostgreSQL + Prisma ORM |
+| Document data | MongoDB + Mongoose |
+| Search | Elasticsearch |
+| Event streaming | Kafka + Zookeeper |
+| Caching | Redis |
+| Monitoring | Prometheus |
+| Dashboards | Grafana |
+| AI | Google Gemini API |
+| Auth | JWT + bcrypt |
+| API docs | Swagger / OpenAPI |
+| Testing | Jest, Postman, autocannon |
+| Deployment | Docker, Docker Compose, Kubernetes |
 
 ---
 
-## Phase 2 — Completed Deliverables ✅
+## Quick Start
 
-### Log Processing Pipeline
-- Log parsing engine — normalizes all incoming logs
-- Automatic level classification (debug / info / warn / error / critical)
-- Error categorization (database, auth, timeout, validation, network, and more)
+**Prerequisites:** Docker Desktop, a free [Gemini API key](https://ai.google.dev/)
 
-### Elasticsearch Integration
-- Elasticsearch 8.13.0 running in Docker
-- Automatic log indexing on every ingestion
-- Full-text search across log messages
-- Filter by service, level, error category, status code, and date range
-
-### Anomaly Detection Module
-- Traffic spike detection (compares current vs baseline window)
-- Error rate monitoring (flags when error % exceeds threshold)
-- Response time degradation detection
-- Unusual auth activity detection (brute-force signals)
-- Runs automatically every 5 minutes
-- Saves detected anomalies as incidents in PostgreSQL
-
-### Gemini AI Integration
-- Connected to Google Gemini API (`gemini-2.5-flash`)
-- Robust JSON response parsing with markdown fence stripping
-
-### AI Log Analysis Engine
-- Analyzes recent logs for any service
-- Generates plain-English summary, severity, root cause, and affected components
-- Provides immediate actions and prevention tips
-
-### Incident Summary Generator
-- AI-generated incident reports from incident + related logs
-- Covers headline, impact, root cause, resolution, and lessons learned
-
-### Recommendation Engine
-- Analyzes last 24 hours of metrics
-- Generates performance, security, and reliability recommendations
-
-### Search & Query APIs
-- Full-text log search powered by Elasticsearch
-- Filter by service, level, error category, date range
-
-### Testing
-- 14/14 Jest tests passing for log processor service
-
----
-
-## API Overview
-
-| Module | Base Route | Description |
-|---|---|---|
-| Auth | `/api/auth` | Register, login, get current user |
-| Logs | `/api/logs` | Create, query, filter, and aggregate logs |
-| Metrics | `/api/metrics` | Record and analyze API performance metrics |
-| Monitor | `/api/monitor` | Register and health-check external services |
-| Dashboard | `/api/dashboard` | Combined observability overview |
-| Search | `/api/search` | Elasticsearch-powered log search and filtering |
-| AI | `/api/ai` | AI log analysis, error explanation, recommendations, anomaly detection |
-| Incidents | `/api/incidents` | Incident management and AI-generated summaries |
-| Health | `/health` | Internal database connectivity checks |
-
-Full interactive documentation available at `http://localhost:3000/api-docs` once the server is running.
-
----
-
-## Getting Started
-
-### Prerequisites
-- Node.js v18+
-- Docker Desktop
-- npm
-
-### Installation
 ```bash
 git clone https://github.com/sneha-paul-2005/observability-tool.git
 cd observability-tool
-npm install
 ```
 
-### Environment Setup
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root:
 ```env
 PORT=3000
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres:password@localhost:5432/observability_db
 MONGODB_URI=mongodb://localhost:27017/observability_logs
-JWT_SECRET=your_secret_key
+JWT_SECRET=change_this_to_a_random_secret
 JWT_EXPIRES_IN=7d
-GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=your_gemini_api_key_here
 ELASTICSEARCH_URL=http://localhost:9200
+KAFKA_BROKER=localhost:9092
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
-### Running Locally
 ```bash
-# Start PostgreSQL, MongoDB, and Elasticsearch containers
-docker-compose up -d
+docker-compose up -d --build
+docker exec -it observability_app npx prisma migrate deploy
+```
 
-# Run database migrations
+| Service | URL |
+|---|---|
+| API | http://localhost:3000 |
+| API docs | http://localhost:3000/api-docs |
+| Grafana | http://localhost:3001 (admin / admin) |
+| Prometheus | http://localhost:9090 |
+
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"yourpassword","name":"Your Name"}'
+```
+
+A full Postman collection (`observability-tool.postman_collection.json`) is included for interactive testing.
+
+---
+
+## Running without Docker
+
+```bash
+docker-compose up -d postgres mongodb elasticsearch kafka zookeeper redis
+npm install
 npx prisma migrate dev
-
-# Start the development server
 npm run dev
 ```
 
-Server runs at `http://localhost:3000`
-API docs available at `http://localhost:3000/api-docs`
+## Deploying to Kubernetes
 
-### Running Tests
+```bash
+kubectl apply -f k8s/
+kubectl port-forward service/app 3000:3000
+```
+Deploys all nine services as separate pods with proper Kubernetes networking.
+
+## Testing
+
 ```bash
 npm test
+npx autocannon -c 20 -d 15 -H "Authorization: Bearer <token>" http://localhost:3000/api/dashboard/overview
 ```
+Full load, security, and AI-output validation results: `FINAL_TESTING_REPORT.md`
 
-### Testing the API
-A complete Postman collection is included: `observability-tool.postman_collection.json`
-Import it directly into Postman to test all endpoints.
+---
+
+## API Overview
+
+| Module | Base Route | What it's for |
+|---|---|---|
+| Auth | `/api/auth` | Registration, login, current user |
+| Logs | `/api/logs` | Ingest and query application logs |
+| Metrics | `/api/metrics` | Record and analyze API performance |
+| Monitor | `/api/monitor` | Register and health-check external services |
+| Dashboard | `/api/dashboard` | Health, error trends, performance, incident stats |
+| Search | `/api/search` | Full-text log search via Elasticsearch |
+| AI | `/api/ai` | Log analysis, explanations, recommendations, assistant |
+| Incidents | `/api/incidents` | Incident tracking and AI-generated summaries |
+| Alerts | `/api/alerts` | Threshold-based alerting |
+| Health | `/health` | Database connectivity check |
+| Metrics (Prometheus) | `/metrics` | Prometheus scrape endpoint |
+
+Full interactive docs at `/api-docs` once running.
 
 ---
 
 ## Project Structure
 
-```
-observability-tool/
-├── src/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   ├── app.js
-│   └── server.js
-├── prisma/
-│   └── schema.prisma
-├── tests/
-│   └── logProcessor.test.js
-├── docker-compose.yml
-└── observability-tool.postman_collection.json
-```
+- `src/config` — database, Kafka, Redis, Swagger configuration
+- `src/controllers` — route handler logic
+- `src/middleware` — authentication, request metrics collection
+- `src/models` — Mongoose schemas
+- `src/routes` — Express routes and Swagger docs
+- `src/services` — AI integration, alerting, anomaly detection, caching
+- `src/consumers` — Kafka consumer for Elasticsearch indexing
+- `prisma` — PostgreSQL schema and migrations
+- `k8s` — Kubernetes manifests for every service
+- `grafana/provisioning` — auto-provisioned Grafana data source
+- `tests` — Jest unit test suite
+
 ---
 
-## Author
-Sneha Paul — B.Tech Robotics & AI, IEM Kolkata
-Internship Project — Ultimates Technology
+## Design notes
+
+- Logs save to MongoDB synchronously (immediately queryable); Elasticsearch indexing happens asynchronously via Kafka, keeping ingestion fast under load
+- Dashboard and AI endpoints cache through Redis with short TTLs, falling back to direct computation if Redis is unavailable
+- The AI Assistant only answers using real data from the last 24 hours — it says when it doesn't have enough information rather than guessing
+- Prisma is pinned to v6; v7 changed the schema format in a breaking way this project hasn't migrated to
+
+---
+
+## License
+
+This project is licensed under the MIT License — see `LICENSE` for details. MIT is a permissive license: anyone can use, copy, modify, and distribute this code, including for commercial purposes, as long as the original copyright notice is retained.
+
+---
+
+<sub>Built by Sneha Paul, B.Tech Robotics & AI, IEM Kolkata. Originally developed as an internship project at Ultimates Technology.</sub>
