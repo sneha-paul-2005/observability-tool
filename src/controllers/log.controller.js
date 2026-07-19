@@ -67,6 +67,14 @@ const getLogs = async (req, res) => {
   try {
     const { level, service, startDate, endDate, limit = 50, page = 1 } = req.query;
 
+    // Reject non-string filter values to prevent NoSQL operator injection (e.g. service[$ne]=null)
+    if (level !== undefined && typeof level !== 'string') {
+      return res.status(400).json({ error: 'Invalid level parameter' });
+    }
+    if (service !== undefined && typeof service !== 'string') {
+      return res.status(400).json({ error: 'Invalid service parameter' });
+    }
+
     const filter = {};
     if (level) filter.level = level;
     if (service) filter.service = service;
